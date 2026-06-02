@@ -1,1 +1,22 @@
+# File: environments/dev/app-poc/kustomization.yaml
+# (in esarath/aks-poc-gitops repo)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
 
+namespace: app-poc
+
+resources:
+- web-deployment.yaml
+- web-service.yaml
+- web-ingress.yaml
+- db-deployment.yaml
+- db-service.yaml
+- db-pvc.yaml
+
+images:
+- name: esarathmails/aks-poc-web
+  newTag: latest   # CD workflow updates this value
+
+commonLabels:
+  app.kubernetes.io/managed-by: argocd
+  environment: dev
