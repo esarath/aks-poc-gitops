@@ -1,1 +1,81 @@
-
+# File: environments/dev/app-poc/web-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-api
+  namespace: app-poc
+  labels:
+    app: web-api
+    version: "1.0"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: web-api
+    spec:
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: user
+        effect: NoSchedule
+      containers:
+      - name: web-api
+        image: esarathmails/aks-poc-web:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: DB_HOST
+          value: "postgresql-service"
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: db-password
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+      securityContext:
+        fsGroup: 2000
