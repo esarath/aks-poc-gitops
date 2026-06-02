@@ -1,1 +1,37 @@
-
+# File: environments/dev/app-poc/web-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-api-service
+  namespace: app-poc
+spec:
+  selector:
+    app: web-api
+  ports:
+  - port: 80
+    targetPort: 8000
+    name: http
+  type: ClusterIP
+---
+# File: environments/dev/app-poc/web-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-api-ingress
+  namespace: app-poc
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-api-service
+            port:
+              name: http
