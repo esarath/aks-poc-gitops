@@ -1,1 +1,31 @@
-
+# File: environments/dev/argocd-app.yaml
+# Apply this directly to the cluster
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-poc
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/esarath/aks-poc-gitops
+    targetRevision: HEAD
+    path: environments/dev/app-poc
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: app-poc
+  syncPolicy:
+    automated:
+      prune: true        # remove deleted resources
+      selfHeal: true     # revert manual changes
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
